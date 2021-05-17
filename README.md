@@ -1,4 +1,4 @@
-# jumpcutter - Automatically pop silences from videos
+# jumpcutter - Automatically remove or speed up silences from videos
 
 Add this to `~/.bashrc` to run the script in any directory as `jcc some-video.mp4 some-other-video.mkv`
 
