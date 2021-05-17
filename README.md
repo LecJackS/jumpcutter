@@ -1,4 +1,25 @@
 # jumpcutter
+
+Add this to `~/.bashrc` to run the script in any directory as `jcc some-video.mp4 some-other-video.mkv`
+
+Remove `cd ~/Videos` in case you don't need that.
+
+```bash
+# Video silence cutter
+jcc (){
+    cd ~/Videos;
+    for file_name in "$@"
+    do
+        python ~/jumpcutter/jumpcutter.py --silent_speed 999999 --frame_margin 8 --frame_quality 3 --frame_rate 25 --silent_threshold 0.06 --input_file $file_name
+    done
+}
+```
+
+
+---
+
+Original work from: carykh
+
 Automatically edits videos. Explanation here: https://www.youtube.com/watch?v=DQ8orIurGxw
 
 ## Some heads-up:
