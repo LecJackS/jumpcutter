@@ -15,10 +15,22 @@ jcc (){
 }
 ```
 
+---
+
+### Main diffs to Carykh project:
+
+* Frame rate is now a parameter as "auto discover frame rate" does not work
+
+* Added silent_threshold_abs parameter as silent threshold with absolute value (not percent of max volume). Good for videos recorded in similar conditions.
+
+* Added noise reduction to the end video file:
+  https://github.com/LecJackS/jumpcutter/commit/ff075e83085885b53a513c8d454f0d4c769547c5#diff-c7086a2be3661ab78f759ef1da70ed6394a89ec8883b54b704c5f72218b835e8R102
 
 ---
 
-Original work from: carykh
+Original work: https://github.com/carykh/jumpcutter
+
+---
 
 Automatically edits videos. Explanation here: https://www.youtube.com/watch?v=DQ8orIurGxw
 
@@ -26,17 +38,19 @@ Automatically edits videos. Explanation here: https://www.youtube.com/watch?v=DQ
 
 It uses Python 3.
 
-It works on Ubuntu 16.04 and Windows 10. (It might work on other OSs too, we just haven't tested it yet.)
+It works on Ubuntu <= 20.04 and Windows 10. (It might work on other OSs too, we just haven't tested it yet.)
 
 This program relies heavily on ffmpeg. It will start subprocesses that call ffmpeg, so be aware of that!
 
-As the program runs, it saves every frame of the video as an image file in a
-temporary folder. If your video is long, this could take a LOT of space.
-I have processed 17-minute videos completely fine, but be wary if you're gonna go longer.
+As the program runs, it saves every frame of the video as an image file in a temporary folder.
 
-I want to use pyinstaller to turn this into an executable, so non-techy people
-can use it EVEN IF they don't have Python and all those libraries. Jabrils 
-recommended this to me. However, my pyinstaller build did not work. :( HELP
+If your video is long, this could take a LOT of space.
+
+I have processed ~1 hour videos completely fine, but be wary if you're gonna go longer.
+
+I want to use pyinstaller to turn this into an executable, so non-techy people can use it EVEN IF they don't have Python and all those libraries.
+
+Jabrils recommended this to me. However, my pyinstaller build did not work. :( HELP
 
 ## Building with nix
 `nix-build` to get a script with all the libraries and ffmpeg, `nix-build -A bundle` to get a single binary.
