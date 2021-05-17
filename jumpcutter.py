@@ -43,8 +43,9 @@ def createPath(s):
     try:  
         os.mkdir(s)
     except OSError:  
-        assert False, "Creation of the directory %s failed. (The TEMP folder may already exist. Delete or rename it, and try again.)"
-
+        #assert False, "Creation of the directory %s failed. (The TEMP folder may already exist. Delete or rename it, and try again.)"
+        print("Creation of the directory %s failed. (The TEMP folder may already exist. Delete or rename it, and try again.)")
+        
 def deletePath(s): # Dangerous! Watch out!
     try:  
         rmtree(s,ignore_errors=False)
@@ -57,6 +58,7 @@ parser.add_argument('--input_file', type=str,  help='the video file you want mod
 parser.add_argument('--url', type=str, help='A youtube url to download and process')
 parser.add_argument('--output_file', type=str, default="", help="the output file. (optional. if not included, it'll just modify the input file name)")
 parser.add_argument('--silent_threshold', type=float, default=0.03, help="the volume amount that frames' audio needs to surpass to be consider \"sounded\". It ranges from 0 (silence) to 1 (max volume)")
+parser.add_argument('--silent_threshold_abs', type=float, default=540, help="absolute value to edit. Videos are around ~9000*0.06")
 parser.add_argument('--sounded_speed', type=float, default=1.00, help="the speed that sounded (spoken) frames should be played at. Typically 1.")
 parser.add_argument('--silent_speed', type=float, default=5.00, help="the speed that silent frames should be played at. 999999 for jumpcutting.")
 parser.add_argument('--frame_margin', type=float, default=1, help="some silent frames adjacent to sounded frames are included to provide context. How many frames on either the side of speech should be included? That's this variable.")
@@ -71,6 +73,7 @@ args = parser.parse_args()
 frameRate = args.frame_rate
 SAMPLE_RATE = args.sample_rate
 SILENT_THRESHOLD = args.silent_threshold
+SILENT_THRESHOLD_ABS = args.silent_threshold_abs
 FRAME_SPREADAGE = args.frame_margin
 NEW_SPEED = [args.silent_speed, args.sounded_speed]
 if args.url != None:
@@ -92,14 +95,16 @@ AUDIO_FADE_ENVELOPE_SIZE = 400 # smooth out transitiion's audio by quickly fadin
     
 createPath(TEMP_FOLDER)
 
+
 command = "ffmpeg -i "+INPUT_FILE+" -qscale:v "+str(FRAME_QUALITY)+" "+TEMP_FOLDER+"/frame%06d.jpg -hide_banner"
 subprocess.call(command, shell=True)
 
-command = "ffmpeg -i "+INPUT_FILE+" -ab 160k -ac 2 -ar "+str(SAMPLE_RATE)+" -vn "+TEMP_FOLDER+"/audio.wav"
+noise_reduction = " -af afftdn"
+command = "ffmpeg -i "+INPUT_FILE+noise_reduction+" -ab 160k -ac 2 -ar "+str(SAMPLE_RATE)+" -vn "+TEMP_FOLDER+"/audio.wav"
 
 subprocess.call(command, shell=True)
 
-command = "ffmpeg -i "+TEMP_FOLDER+"/input.mp4 2>&1"
+command = "ffmpeg -i "+TEMP_FOLDER+"/input.mp4 2>&1 -b:v 50000"
 f = open(TEMP_FOLDER+"/params.txt", "w")
 subprocess.call(command, shell=True, stdout=f)
 
@@ -108,6 +113,7 @@ subprocess.call(command, shell=True, stdout=f)
 sampleRate, audioData = wavfile.read(TEMP_FOLDER+"/audio.wav")
 audioSampleCount = audioData.shape[0]
 maxAudioVolume = getMaxVolume(audioData)
+print("maxAudioVolume:", maxAudioVolume)
 
 f = open(TEMP_FOLDER+"/params.txt", 'r+')
 pre_params = f.read()
@@ -131,6 +137,9 @@ for i in range(audioFrameCount):
     end = min(int((i+1)*samplesPerFrame),audioSampleCount)
     audiochunks = audioData[start:end]
     maxchunksVolume = float(getMaxVolume(audiochunks))/maxAudioVolume
+    print("maxchunksVolume = float(getMaxVolume(audiochunks))/maxAudioVolume",maxchunksVolume,float(getMaxVolume(audiochunks)),maxAudioVolume)
+    #maxchunksVolume = float(getMaxVolume(audiochunks))
+    #if maxchunksVolume >= SILENT_THRESHOLD_ABS:
     if maxchunksVolume >= SILENT_THRESHOLD:
         hasLoudAudio[i] = 1
 
