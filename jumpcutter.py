@@ -254,5 +254,5 @@ for filen_name in chunk_names:
 
 # Merge files if necessary (only after splitting into parts)
 if num_chunks > 1:
-    command = "mkvmerge -o output_test.mkv " + str(chunk_names).replace("', '", "_ALTERED +").replace("['", " ").replace("']", "")
+    command = "mkvmerge -o output_test.mkv " + str(chunk_names).replace("', '", "_ALTERED +").replace("['", " ").replace("']", "_ALTERED")
     subprocess.call(command, shell=True)
