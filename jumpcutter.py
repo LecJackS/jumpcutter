@@ -12,6 +12,7 @@ import os
 import argparse
 from pytube import YouTube
 
+
 def downloadFile(url):
     name = YouTube(url).streams.first().download()
     newname = name.replace(' ','_')
@@ -253,6 +254,9 @@ for filen_name in chunk_names:
     jumpcutter(filen_name, frame_rate)
 
 # Merge files if necessary (only after splitting into parts)
+
 if num_chunks > 1:
-    command = "mkvmerge -o output_test.mkv " + str(chunk_names).replace("', '", "_ALTERED +").replace("['", " ").replace("']", "_ALTERED")
+    processed_chunk_names = [inputToOutputFilename(chunk_name) for chunk_name in chunk_names]
+    command = "mkvmerge -o {}".format(inputToOutputFilename(INPUT_FILE)) + str(processed_chunk_names).replace("', '", " +").replace("['", " ").replace("']", "")
+    print("About to run:", command)
     subprocess.call(command, shell=True)
