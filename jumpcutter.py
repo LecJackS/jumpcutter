@@ -54,6 +54,13 @@ def deletePath(s): # Dangerous! Watch out!
         print ("Deletion of the directory %s failed" % s)
         print(OSError)
 
+def delete_temp_file(file_name):
+    try:  
+        os.remove(file_name)
+    except OSError:  
+        print ("Deletion of file {} failed".format(file_name))
+        print(OSError)
+
 parser = argparse.ArgumentParser(description='Modifies a video file to play at different speeds when there is sound vs. silence.')
 parser.add_argument('--input_file', type=str,  help='the video file you want modified')
 parser.add_argument('--url', type=str, help='A youtube url to download and process')
@@ -66,7 +73,7 @@ parser.add_argument('--frame_margin', type=float, default=1, help="some silent f
 parser.add_argument('--sample_rate', type=float, default=44100, help="sample rate of the input and output videos")
 parser.add_argument('--frame_rate', type=float, default=30, help="frame rate of the input and output videos. optional... I try to find it out myself, but it doesn't always work.")
 parser.add_argument('--frame_quality', type=int, default=3, help="quality of frames to be extracted from input video. 1 is highest, 31 is lowest, 3 is the default.")
-parser.add_argument('--chunk_duration', type=float, default=30, help="chunk duration in minutes to split the video before processing to reduce disk usage")
+parser.add_argument('--chunk_duration', type=float, default=10, help="chunk duration in minutes to split the video before processing to reduce disk usage")
 
 args = parser.parse_args()
 
@@ -127,6 +134,13 @@ else:
 
 def jumpcutter(input_file, frame_rate):
     input_file = input_file
+
+    output_file = inputToOutputFilename(input_file)
+
+    if os.path.isfile(output_file):
+        print("Output file \"{}\" already exists. Ignoring this part to process.".format(output_file))
+        return
+
     
     AUDIO_FADE_ENVELOPE_SIZE = 400 # smooth out transitiion's audio by quickly fading in/out (arbitrary magic number whatever)
         
@@ -241,17 +255,24 @@ def jumpcutter(input_file, frame_rate):
     for endGap in range(outputFrame,audioFrameCount):
         copyFrame(int(audioSampleCount/samplesPerFrame)-1,endGap)
     '''
-    output_file = inputToOutputFilename(input_file)
+    
     command = "ffmpeg -framerate "+str(frame_rate)+" -i "+TEMP_FOLDER+"/newFrame%06d.jpg -i "+TEMP_FOLDER+"/audioNew.wav -strict -2 "+output_file
     subprocess.call(command, shell=True)
 
     deletePath(TEMP_FOLDER)
 
+
+
 # Jumpcutter files
-for filen_name in chunk_names:
+for file_name in chunk_names:
     print("Starting processing video file/s.")
     print("Processing {} from {} pieces".format(filen_name, len(chunk_names)))
-    jumpcutter(filen_name, frame_rate)
+    jumpcutter(file_name, frame_rate)
+    print("Done processing \"{}\"".format(file_name))
+
+    print("Removing temp file:",file_name)
+    delete_temp_file(file_name)
+    print("Removing done.")
 
 # Merge files if necessary (only after splitting into parts)
 
@@ -260,3 +281,9 @@ if num_chunks > 1:
     command = "mkvmerge -o {}".format(inputToOutputFilename(INPUT_FILE)) + str(processed_chunk_names).replace("', '", " +").replace("['", " ").replace("']", "")
     print("About to run:", command)
     subprocess.call(command, shell=True)
+    print("Last merge done!")
+    print("Removing temp files...")
+    # Remove temp files
+    for filen_name in processed_chunk_names:
+        delete_temp_file(file_name)
+        print("Removing done: {}".format(file_name))
