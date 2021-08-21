@@ -122,11 +122,11 @@ else:
     print("Spliting source video into {} pieces".format(num_chunks))
     # ffmpeg does not split correctly as the beggining of each piece is delayed/don't show video, only audio
     # Thats why I use mkvmerge from mkvtoolnix package
-    command = "mkvmerge --split " + str(piece_dur) + "s " + INPUT_FILE + " -o " + INPUT_FILE[:-4]+"s"+INPUT_FILE[-4:]
+    command = "mkvmerge --split " + str(piece_dur) + "s " + INPUT_FILE + " -o " + INPUT_FILE[:-4]+"-split"+INPUT_FILE[-4:]
     subprocess.call(command, shell=True)
 
     # mkvmerge automatically adds "-001", "-002", etc, to the "-o" given param between "filename" and ".mkv"
-    chunk_names = [INPUT_FILE[:-4] + "s" + "-{:03}.{}".format(i+1, INPUT_FILE[-3:]) for i in range(num_chunks)]
+    chunk_names = [INPUT_FILE[:-4] + "-split-{:03}.{}".format(i+1, INPUT_FILE[-3:]) for i in range(num_chunks)]
     print("Splitting done. Chunk names:")
     for filen_name in chunk_names:
         print(filen_name) 
@@ -266,7 +266,7 @@ def jumpcutter(input_file, frame_rate):
 # Jumpcutter files
 for file_name in chunk_names:
     print("Starting processing video file/s.")
-    print("Processing {} from {} pieces".format(filen_name, len(chunk_names)))
+    print("Processing {} from {} pieces".format(file_name, len(chunk_names)))
     jumpcutter(file_name, frame_rate)
     print("Done processing \"{}\"".format(file_name))
 
@@ -285,6 +285,8 @@ if num_chunks > 1:
     print("Removing temp files...")
     
     # Remove temp files
-    for filen_name in processed_chunk_names:
-        delete_temp_file(inputToOutputFilename(file_name))
-        print("Removing done: {}".format(inputToOutputFilename(file_name)))
+    for file_name in processed_chunk_names:
+        delete_temp_file(file_name)
+        print("Removing done: {}".format(file_name))
+
+print("All done! :)")
