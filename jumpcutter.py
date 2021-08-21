@@ -283,7 +283,8 @@ if num_chunks > 1:
     subprocess.call(command, shell=True)
     print("Last merge done!")
     print("Removing temp files...")
+    
     # Remove temp files
     for filen_name in processed_chunk_names:
-        delete_temp_file(file_name)
-        print("Removing done: {}".format(file_name))
+        delete_temp_file(inputToOutputFilename(file_name))
+        print("Removing done: {}".format(inputToOutputFilename(file_name)))
