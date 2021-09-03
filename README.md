@@ -34,6 +34,13 @@ jcc (){
 * Added noise reduction to the end video file:
   https://github.com/LecJackS/jumpcutter/commit/ff075e83085885b53a513c8d454f0d4c769547c5#diff-c7086a2be3661ab78f759ef1da70ed6394a89ec8883b54b704c5f72218b835e8R102
 
+
+### Example videos
+
+I use this script extensively for my own study channel:
+
+> https://www.youtube.com/channel/UCEXYShrJ6pky361
+
 ---
 
 Original work: https://github.com/carykh/jumpcutter
