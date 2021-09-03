@@ -23,9 +23,9 @@ jcc (){
 
 * Sub diivide original video into smaller chunks to process individually, and then merge. This way, we prevent the TEMP folder to be HUGE.
   
-  eg: If the video is 1GB, you can expect a TEMP folder of ~30GB, so if first dividing the original video into 10 chunks of 100MB, the TEMP folder will be around ~3GB
+  *  eg: If the video is 1GB, you can expect a TEMP folder of ~30GB, so if first dividing the original video into 10 chunks of 100MB, the TEMP folder will be around ~3GB
   
-  `--chunk_duration 15` will set each chunk to be approximately 15 minutes each (the separation process is not exact, but it's really fast).
+  *  `--chunk_duration 15` will set each chunk to be approximately 15 minutes each (the separation process is not exact, but it's really fast).
 
 * `frame_rate` is now a required parameter as "auto discover frame rate" does not work
 
