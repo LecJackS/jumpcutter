@@ -10,7 +10,7 @@ jcc (){
     cd ~/Videos;
     for file_name in "$@"
     do
-        python ~/jumpcutter/jumpcutter.py --silent_speed 999999 --frame_margin 8 --frame_quality 3 --frame_rate 25 --silent_threshold 0.06 --input_file $file_name
+        python ~/jumpcutter/jumpcutter.py  --chunk_duration 15 --silent_speed 999999 --frame_margin 8 --frame_quality 3 --frame_rate 25 --sample_rate 32000 --silent_threshold 0.08 --input_file $file_name
     done
 }
 ```
@@ -18,6 +18,14 @@ jcc (){
 ---
 
 ### Main diffs to Carykh project:
+
+* Process a list of video files, not only one per call (using the bash script from before)-
+
+* Sub diivide original video into smaller chunks to process individually, and then merge. This way, we prevent the TEMP folder to be HUGE.
+  
+  eg: If the video is 1GB, you can expect a TEMP folder of ~30GB, so if first dividing the original video into 10 chunks of 100MB, the TEMP folder will be around ~3GB
+  
+  `--chunk_duration 15` will set each chunk to be approximately 15 minutes each (the separation process is not exact, but it's really fast).
 
 * `frame_rate` is now a required parameter as "auto discover frame rate" does not work
 
