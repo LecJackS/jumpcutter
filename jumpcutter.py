@@ -70,7 +70,7 @@ parser.add_argument('--silent_threshold_abs', type=float, default=540, help="abs
 parser.add_argument('--sounded_speed', type=float, default=1.00, help="the speed that sounded (spoken) frames should be played at. Typically 1.")
 parser.add_argument('--silent_speed', type=float, default=5.00, help="the speed that silent frames should be played at. 999999 for jumpcutting.")
 parser.add_argument('--frame_margin', type=float, default=1, help="some silent frames adjacent to sounded frames are included to provide context. How many frames on either the side of speech should be included? That's this variable.")
-parser.add_argument('--sample_rate', type=float, default=44100, help="sample rate of the input and output videos")
+parser.add_argument('--sample_rate', type=int, default=44100, help="sample rate of the input and output videos")
 parser.add_argument('--frame_rate', type=float, default=30, help="frame rate of the input and output videos. optional... I try to find it out myself, but it doesn't always work.")
 parser.add_argument('--frame_quality', type=int, default=3, help="quality of frames to be extracted from input video. 1 is highest, 31 is lowest, 3 is the default.")
 parser.add_argument('--chunk_duration', type=float, default=10, help="chunk duration in minutes to split the video before processing to reduce disk usage")
@@ -128,8 +128,8 @@ else:
     # mkvmerge automatically adds "-001", "-002", etc, to the "-o" given param between "filename" and ".mkv"
     chunk_names = [INPUT_FILE[:-4] + "-split-{:03}.{}".format(i+1, INPUT_FILE[-3:]) for i in range(num_chunks)]
     print("Splitting done. Chunk names:")
-    for filen_name in chunk_names:
-        print(filen_name) 
+    for file_name in chunk_names:
+        print(file_name) 
 
 
 def jumpcutter(input_file, frame_rate):
