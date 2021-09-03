@@ -31,8 +31,8 @@ jcc (){
 
 * Added `silent_threshold_abs` parameter as silent threshold with absolute value (not percent of max volume). Good for videos recorded in similar conditions.
 
-* Added noise reduction to the end video file:
-  https://github.com/LecJackS/jumpcutter/commit/ff075e83085885b53a513c8d454f0d4c769547c5#diff-c7086a2be3661ab78f759ef1da70ed6394a89ec8883b54b704c5f72218b835e8R102
+* [Added noise reduction](https://github.com/LecJackS/jumpcutter/commit/ff075e83085885b53a513c8d454f0d4c769547c5#diff-c7086a2be3661ab78f759ef1da70ed6394a89ec8883b54b704c5f72218b835e8R102
+) to the end video file.
 
 
 ### Example videos
