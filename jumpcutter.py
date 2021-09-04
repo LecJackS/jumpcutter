@@ -270,9 +270,10 @@ for file_name in chunk_names:
     jumpcutter(file_name, frame_rate)
     print("Done processing \"{}\"".format(file_name))
 
-    print("Removing temp file:",file_name)
-    delete_temp_file(file_name)
-    print("Removing done.")
+    if num_chunks > 1 and file_name != INPUT_FILE:
+        print("Removing temp file:",file_name)
+        delete_temp_file(file_name)
+        print("Removing done.")
 
 # Merge files if necessary (only after splitting into parts)
 
@@ -286,7 +287,8 @@ if num_chunks > 1:
     
     # Remove temp files
     for file_name in processed_chunk_names:
-        delete_temp_file(file_name)
-        print("Removing done: {}".format(file_name))
+        if file_name != INPUT_FILE:
+            delete_temp_file(file_name)
+            print("Removing done: {}".format(file_name))
 
 print("All done! :)")
