@@ -25,8 +25,8 @@ def getMaxVolume(s):
     return max(maxv,-minv)
 
 def copyFrame(inputFrame,outputFrame):
-    src = TEMP_FOLDER+"/frame{:06d}".format(inputFrame+1)+".jpg"
-    dst = TEMP_FOLDER+"/newFrame{:06d}".format(outputFrame+1)+".jpg"
+    src = TEMP_FOLDER+"/frame{:06d}".format(inputFrame+1)+".tif"
+    dst = TEMP_FOLDER+"/newFrame{:06d}".format(outputFrame+1)+".tif"
     if not os.path.isfile(src):
         return False
     copyfile(src, dst)
@@ -36,7 +36,7 @@ def copyFrame(inputFrame,outputFrame):
 
 def inputToOutputFilename(filename):
     dotIndex = filename.rfind(".")
-    return filename[:dotIndex]+"_ALTERED"+filename[dotIndex:]
+    return filename[:dotIndex]+"_PROCESSED"+filename[dotIndex:]
 
 def createPath(s):
     #assert (not os.path.exists(s)), "The filepath "+s+" already exists. Don't want to overwrite it. Aborting."
@@ -107,27 +107,40 @@ else:
  
 #file_size = os.path.getsize(INPUT_FILE) / (1024*1024) # in megabytes (1024*1024 Bytes)
 #num_chunks = (file_size // CHUNK_SIZE) + 1
-piece_dur = CHUNK_DUR * 60 # 25 minutes in seconds
+piece_dur = int(CHUNK_DUR * 60) # CHUNK_DUR minutes in seconds
+
 command = "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "+INPUT_FILE
-print((subprocess.run(command, capture_output=True, shell=True).stdout))
+print("---------\n", (subprocess.run(command, capture_output=True, shell=True).stdout), "\n---------\n")
+
 file_duration = float(subprocess.run(command, capture_output=True, shell=True).stdout)
 
-num_chunks = int((file_duration // piece_dur) + 1)
+estimated_num_chunks = math.ceil(file_duration / piece_dur)
 
 
 chunk_names = []
-if num_chunks == 1:
+if estimated_num_chunks == 1:
+    num_chunks = 1
     chunk_names.append(INPUT_FILE)
 else:
-    print("Spliting source video into {} pieces".format(num_chunks))
+    print("Spliting source video into pieces...")
     # ffmpeg does not split correctly as the beggining of each piece is delayed/don't show video, only audio
     # Thats why I use mkvmerge from mkvtoolnix package
     command = "mkvmerge --split " + str(piece_dur) + "s " + INPUT_FILE + " -o " + INPUT_FILE[:-4]+"-split"+INPUT_FILE[-4:]
-    subprocess.call(command, shell=True)
+    out = subprocess.run(command, shell=True, capture_output=True).stdout.decode('UTF-8')
+
+    # Count number of pieces. Each piece is NOT exactly piece_dur seconds, so we need to make sure to count correctly.
+    num_chunks = out.count(INPUT_FILE[:-4]+"-split")
+
+    #print("\n\nall:", (out))
+    #print("\n\ncount:", (out).count(INPUT_FILE[:-4]+"-split"))
+    #print("\n\nsub:", (out.split("\n")))
+    #print("\nlen:", len(out.split("\n")))
+    #print()
 
     # mkvmerge automatically adds "-001", "-002", etc, to the "-o" given param between "filename" and ".mkv"
     chunk_names = [INPUT_FILE[:-4] + "-split-{:03}.{}".format(i+1, INPUT_FILE[-3:]) for i in range(num_chunks)]
-    print("Splitting done. Chunk names:")
+    valid_chunk_names = chunk_names.copy()
+    print("Splitting done. {} pieces. Chunk names:".format(num_chunks))
     for file_name in chunk_names:
         print(file_name) 
 
@@ -146,10 +159,10 @@ def jumpcutter(input_file, frame_rate):
         
     createPath(TEMP_FOLDER)
 
-    command = "ffmpeg -i "+input_file+" -qscale:v "+str(FRAME_QUALITY)+" "+TEMP_FOLDER+"/frame%06d.jpg -hide_banner"
+    command = "ffmpeg -i "+input_file+" -qscale:v "+str(FRAME_QUALITY)+" "+"-aspect 16:9 -qmin 1 -color_primaries 1 -color_trc 1 -colorspace 1 -vf scale=out_color_matrix=bt709"+" "+TEMP_FOLDER+"/frame%06d.tif -hide_banner"
     subprocess.call(command, shell=True)
 
-    noise_reduction = " -af afftdn"
+    noise_reduction = " -af afftdn=nr=10:nf=-30:tn=1"
     command = "ffmpeg -i "+input_file+noise_reduction+" -ab 160k -ac 2 -ar "+str(SAMPLE_RATE)+" -vn "+TEMP_FOLDER+"/audio.wav"
 
     subprocess.call(command, shell=True)
@@ -186,7 +199,17 @@ def jumpcutter(input_file, frame_rate):
         start = int(i*samplesPerFrame)
         end = min(int((i+1)*samplesPerFrame),audioSampleCount)
         audiochunks = audioData[start:end]
-        maxchunksVolume = float(getMaxVolume(audiochunks))/maxAudioVolume
+        if maxAudioVolume > 0:
+            maxchunksVolume = float(getMaxVolume(audiochunks))/maxAudioVolume
+        else:
+            # This piece is entirely silenced, so it will be removed
+            #maxchunksVolume = float(getMaxVolume(audiochunks))
+            split_name = input_file[:-4] + "-split-{:03}.{}".format(i+1, input_file[-3:])
+            print(f"Silenced split! Removing it entirely: {input_file}")
+            global valid_chunk_names
+            valid_chunk_names.remove(input_file)
+            deletePath(TEMP_FOLDER)
+            return
         print("maxchunksVolume = float(getMaxVolume(audiochunks))/maxAudioVolume",maxchunksVolume,float(getMaxVolume(audiochunks)),maxAudioVolume)
         #maxchunksVolume = float(getMaxVolume(audiochunks))
         #if maxchunksVolume >= SILENT_THRESHOLD_ABS:
@@ -256,7 +279,7 @@ def jumpcutter(input_file, frame_rate):
         copyFrame(int(audioSampleCount/samplesPerFrame)-1,endGap)
     '''
     
-    command = "ffmpeg -framerate "+str(frame_rate)+" -i "+TEMP_FOLDER+"/newFrame%06d.jpg -i "+TEMP_FOLDER+"/audioNew.wav -strict -2 "+output_file
+    command = "ffmpeg -framerate "+str(frame_rate)+" -i "+TEMP_FOLDER+"/newFrame%06d.tif -i "+TEMP_FOLDER+"/audioNew.wav -strict -2 -vf scale=3840:2160 -aspect 16:9 "+output_file #scale=1280:720 scale=3840:2160
     subprocess.call(command, shell=True)
 
     deletePath(TEMP_FOLDER)
@@ -265,20 +288,20 @@ def jumpcutter(input_file, frame_rate):
 
 # Jumpcutter files
 for file_name in chunk_names:
-    print("Starting processing video file/s.")
+    print("\nStarting processing video file/s.")
     print("Processing {} from {} pieces".format(file_name, len(chunk_names)))
     jumpcutter(file_name, frame_rate)
     print("Done processing \"{}\"".format(file_name))
 
-    if num_chunks > 1 and file_name != INPUT_FILE:
+    if len(chunk_names) > 1 and file_name != INPUT_FILE:
         print("Removing temp file:",file_name)
         delete_temp_file(file_name)
         print("Removing done.")
 
 # Merge files if necessary (only after splitting into parts)
 
-if num_chunks > 1:
-    processed_chunk_names = [inputToOutputFilename(chunk_name) for chunk_name in chunk_names]
+if len(chunk_names) > 1:
+    processed_chunk_names = [inputToOutputFilename(chunk_name) for chunk_name in valid_chunk_names]
     command = "mkvmerge -o {}".format(inputToOutputFilename(INPUT_FILE)) + str(processed_chunk_names).replace("', '", " +").replace("['", " ").replace("']", "")
     print("About to run:", command)
     subprocess.call(command, shell=True)
