@@ -17,19 +17,19 @@ jcc (){
 
 ---
 
-### Main diffs to Carykh project:
+### Main diffs from Carykh's project:
 
 * Process a list of video files, not only one per call (using the bash script from before)-
 
-* Sub diivide original video into smaller chunks to process individually, and then merge. This way, we prevent the TEMP folder to be HUGE.
+* Sub divide original video into smaller chunks to process individually, and then merge. This way, we prevent the TEMP folder from being HUGE.
   
   *  eg: If the video is 1GB, you can expect a TEMP folder of ~30GB, so if first dividing the original video into 10 chunks of 100MB, the TEMP folder will be around ~3GB
   
-  *  `--chunk_duration 15` will set each chunk to be approximately 15 minutes each (the separation process is not exact, but it's really fast).
+  *  `--chunk_duration 15` will set each chunk to be approximately 15 minutes each (the separation process is not exact, but it's really fast). Default value: 1 min
 
 * `frame_rate` is now a required parameter as "auto discover frame rate" does not work
 
-* Added `silent_threshold_abs` parameter as silent threshold with absolute value (not percent of max volume). Good for videos recorded in similar conditions.
+* Added `silent_threshold_abs` parameter as a silent threshold with absolute value (not percent of max volume). Good for videos recorded in similar conditions.
 
 * [Added noise reduction](https://github.com/LecJackS/jumpcutter/commit/ff075e83085885b53a513c8d454f0d4c769547c5#diff-c7086a2be3661ab78f759ef1da70ed6394a89ec8883b54b704c5f72218b835e8R102
 ) to the end video file.
@@ -47,7 +47,7 @@ Original work: https://github.com/carykh/jumpcutter
 
 ---
 
-Automatically edits videos. Explanation here: https://www.youtube.com/watch?v=DQ8orIurGxw
+Automatically edit videos. Explanation here: https://www.youtube.com/watch?v=DQ8orIurGxw
 
 ## Some heads-up:
 
